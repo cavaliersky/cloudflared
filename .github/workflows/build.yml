@@ -21,10 +21,10 @@ jobs:
         with:
           go-version: 1.22
 
-      - name: Build for Android ARM32
-        run: |
-          cd cloudflared/cmd/cloudflared
-          GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -o cloudflared-android-arm
+- name: Build for Linux ARM32 (Termux可用)
+  run: |
+    cd cloudflared/cmd/cloudflared
+    GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -o cloudflared-linux-arm
 
       - name: Upload
         uses: actions/upload-artifact@v4
