@@ -1,4 +1,4 @@
-name: build-cloudflared-arm32
+name: build-cloudflared-android-arm32
 
 on:
   workflow_dispatch:
@@ -8,35 +8,43 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ 拉取你自己的仓库（必须）
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # 2️⃣ 拉 cloudflared 源码
-      - name: Clone cloudflared
+      - name: Clone source
         run: |
           git clone https://github.com/cloudflare/cloudflared.git
 
-      # 3️⃣ 安装 Go
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: 1.22
 
-      # 4️⃣ 编译 Linux ARM32（关键）
-      - name: Build cloudflared (linux arm32)
+      - name: Install NDK
         run: |
+          wget https://dl.google.com/android/repository/android-ndk-r26d-linux.zip
+          unzip android-ndk-r26d-linux.zip
+
+      - name: Build Android ARM32
+        run: |
+          export NDK=$PWD/android-ndk-r26d
+          export TOOLCHAIN=$NDK/toolchains/llvm/prebuilt/linux-x86_64
+
+          export CC=$TOOLCHAIN/bin/armv7a-linux-androideabi21-clang
+          export CXX=$TOOLCHAIN/bin/armv7a-linux-androideabi21-clang++
+
           cd cloudflared/cmd/cloudflared
-          GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -o cloudflared-linux-arm
 
-      # 5️⃣ 看看编译结果（调试用）
-      - name: List output
-        run: |
-          ls -lh cloudflared/cmd/cloudflared
-
-      # 6️⃣ 上传文件（你下载用）
-      - name: Upload artifact
+          CGO_ENABLED=1 \
+          GOOS=android \
+          GOARCH=arm \
+          GOARM=7 \
+          CC=$CC \
+          CXX=$CXX \
+          go build -o cloudflared-android-arm
+          
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: cloudflared-linux-arm
-          path: cloudflared/cmd/cloudflared/cloudflared-linux-arm
+          name: cloudflared-android-arm
+          path: cloudflared/cmd/cloudflared/cloudflared-android-arm
